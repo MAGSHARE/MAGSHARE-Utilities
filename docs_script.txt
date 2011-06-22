@@ -1,0 +1,4 @@
+cd magshare.net/html/bmlt/stable
+rm -drf docs
+tar -xzf docs.tgz
+rm docs.tgz
