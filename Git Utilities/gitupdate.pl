@@ -27,7 +27,7 @@
 #   1.0.4:  Now operate at the top-level only, unless specifically told to recurse,     #
 #           with a -r. Set the init to before the recursion, to ensure that the various #
 #           submodules are actually created BEFORE they are checked for embedded.       #
-#           submodules (duh).                                                           #
+#           submodules (duh). The parsing is now a wee bit more robust.                 #
 #                                                                                       #
 #   1.0.3:  Simplified the system calls.                                                #
 #                                                                                       #
@@ -55,15 +55,14 @@ sub init_and_update
 {
     # This is an array that will hold our submodule listing.
 	my @submodules;
-	# This contains
 	
-	# First, you must have submodules.
+	# First, you must have submodules. The .gitmodules file is available if there are modules.
     if ( open ( GITFILE, '.gitmodules' ) )
         {
         my $heading = <GITFILE>;
 
         # If so, we parse the .gitmodules file, and get the important parts.
-        # This is a REAL DUMB parser. It counts on the lines being in a particular order.
+        # This is a REAL DUMB parser.
         while ( $heading )
             {
             my $pathname;
@@ -71,22 +70,25 @@ sub init_and_update
     
             # The heading is the submodule header (and name).
             chomp ( $heading );
+            # Trim the line.
             $heading =~ s/^\s+//;
             $heading =~ s/\s+$//;
             
             # If we have a submodule...
             if ( $heading =~ m/\[submodule / )
                 {
-                # Strip off the extra
+                # Strip off the extra. Keep the name for display.
                 $heading =~ s/\[submodule "(.*?)"\]/$1/;
                 
                 # Kinda kludgy, but not too bad. Cycle through the lines, looking for either a path or a url.
                 while ( my $nextline = <GITFILE> )
                     {
                     chomp ( $nextline );
+                    # Trim the line.
                     $nextline =~ s/^\s+//;
                     $nextline =~ s/\s+$//;
                     
+                    # Look for either a pathname or a URL. Anything else is ignored, but a submodule breaks the loop.
                     if ( $nextline =~ m/path\s?=/ )
                         {
                         $pathname = $nextline;
@@ -99,9 +101,12 @@ sub init_and_update
                         }
                     else
                         {
-                        $heading = $nextline;
-                        # That's it for now.
-                        last;
+                        # Submodule breaks the loop.
+                        if ( $nextline =~ m/\[submodule / )
+                            {
+                            $heading = $nextline;
+                            last;
+                            }
                         }
                     }
                 
@@ -111,7 +116,8 @@ sub init_and_update
                     push @submodules, { 'submodule' => $heading, 'pathname' => $pathname, 'url' => $url } ;
                     }
                 }
-            else    # Anything else gets tested to see if it's a submodule.
+            # Anything else gets tested to see if it's a submodule.
+            else
                 {
                 $heading = <GITFILE>;
                 }
