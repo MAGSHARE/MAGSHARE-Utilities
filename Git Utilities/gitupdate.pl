@@ -18,7 +18,9 @@
 #       manage the release process manually. This is a "quick and dirty" method for an  #
 #       active development tree.                                                        #
 #                                                                                       #
-#   VERSION: 1.0.2                                                                      #
+#   VERSION: 1.0.3                                                                      #
+#                                                                                       #
+#   1.0.3:  Simplified the system calls.                                                #
 #                                                                                       #
 #   1.0.2:  Now prevent incomplete modules from being counted (shouldn't happen).       #
 #                                                                                       #
@@ -140,12 +142,10 @@ sub init_and_update
             }
         
         # Lets do our own.
-        # First, initialize the Git submodule repository for this working copy.
-        system ( `git submodule init 2>&1` );
-        # Next, update the submodules to make sure we're in sync with the version we're supposed to have.
-        system ( `git submodule update 2>&1` );
+        # First, update and initialize the Git submodule repository for this working copy.
+        system ( `git submodule update --init` );
         # Now, bring each submodule up to the current master branch revision.
-        system ( `git submodule foreach 'git checkout master' 2>&1` );
+        system ( `git submodule foreach 'git checkout master'` );
         
         output_indents();
         print ( "Updated the submodules in the \"", cwd(), "\" directory" );
