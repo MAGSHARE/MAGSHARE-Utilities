@@ -54,7 +54,7 @@ exit;
 sub init_and_update
 {
     # This is an array that will hold our submodule listing.
-	my @submodules;
+    my @submodules;
 	
 	# First, you must have submodules. The .gitmodules file is available if there are modules.
     if ( open ( GITFILE, '.gitmodules' ) )
