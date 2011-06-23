@@ -55,8 +55,8 @@ sub init_and_update
 {
     # This is an array that will hold our submodule listing.
     my @submodules;
-	
-	# First, you must have submodules. The .gitmodules file is available if there are modules.
+    
+    # First, you must have submodules. The .gitmodules file is available if there are modules.
     if ( open ( GITFILE, '.gitmodules' ) )
         {
         my $heading = <GITFILE>;
