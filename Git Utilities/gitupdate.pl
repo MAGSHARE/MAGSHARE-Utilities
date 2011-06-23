@@ -5,7 +5,7 @@
 #########################################################################################
 #   USAGE:                                                                              #
 #       cd [<The base Git Working Copy Directory>]                                      #
-#       gitsclone.pl [-r] (Operates on the CWD).                                        #
+#       gitupdate.pl [-r] (Operates on the CWD).                                        #
 #                                                                                       #
 #       ARGUMENTS:                                                                      #
 #                   -r  Recursive.  If specified, the operation will work recursively.  #
