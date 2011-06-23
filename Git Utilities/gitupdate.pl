@@ -5,7 +5,11 @@
 #########################################################################################
 #   USAGE:                                                                              #
 #       cd [<The base Git Working Copy Directory>]                                      #
-#       gitsclone.pl (Operates on the CWD).                                             #
+#       gitsclone.pl [-r] (Operates on the CWD).                                        #
+#                                                                                       #
+#       ARGUMENTS:                                                                      #
+#                   -r  Recursive.  If specified, the operation will work recursively.  #
+#                                   Default is one-level only.                          #
 #                                                                                       #
 #   This script recursively goes through a Git repository working copy, and "drills"    #
 #   into submodules. It goes as deep as it can, and ensures that the "deepest" modules  #
@@ -18,7 +22,12 @@
 #       manage the release process manually. This is a "quick and dirty" method for an  #
 #       active development tree.                                                        #
 #                                                                                       #
-#   VERSION: 1.0.3                                                                      #
+#   VERSION: 1.0.4                                                                      #
+#                                                                                       #
+#   1.0.4:  Now operate at the top-level only, unless specifically told to recurse,     #
+#           with a -r. Set the init to before the recursion, to ensure that the various #
+#           submodules are actually created BEFORE they are checked for embedded.       #
+#           submodules (duh).                                                           #
 #                                                                                       #
 #   1.0.3:  Simplified the system calls.                                                #
 #                                                                                       #
@@ -33,7 +42,7 @@ use Cwd;
 
 my $global_indent = 0;
 print ( 'Searching the base project at "', cwd(), '"' );
-init_and_update();
+init_and_update($ARGV[0]);
 print ( "\n" );
 
 exit;
@@ -44,7 +53,10 @@ exit;
 #########################################################################################
 sub init_and_update
 {
+    # This is an array that will hold our submodule listing.
 	my @submodules;
+	# This contains
+	
 	# First, you must have submodules.
     if ( open ( GITFILE, '.gitmodules' ) )
         {
@@ -125,27 +137,36 @@ sub init_and_update
             }
         $global_indent--;
         
+        # First, update and initialize the Git submodule repository for this working copy.
+        # This ensures that the directory has been created.
+        print ( "\ngit submodule update --init:\n" );
+        print ( `git submodule update --init 2>&1` );
+        
         # Now, we simply go through the list, recursing all the way.
         # This ensures that nested submodules are updated BEFORE their containers.
-        for my $index ( 0 .. $#submodules )
+        # However, we only do it if we were given a -r.
+        if ( (index ( $_[0], 'r' ) > 0) )
             {
-            # Recursion
-            my $start_path = cwd();
-            chdir ( $submodules[$index] { 'pathname' } );
-            output_indents();
-            print ( "Looking for submodules under the ", $submodules[$index] { 'submodule' }, " submodule" );
-            # Make sure that command line messages are indented.
-            $global_indent++;
-            init_and_update();
-            $global_indent--;
-            chdir ( $start_path );
+            for my $index ( 0 .. $#submodules )
+                {
+                # We keep track of where we are.
+                my $start_path = cwd();
+                # Drop down into the submodule directory.
+                chdir ( $submodules[$index] { 'pathname' } );
+                output_indents();
+                print ( "Looking for submodules under the ", $submodules[$index] { 'submodule' }, " submodule" );
+                # Make sure that command line messages are indented.
+                $global_indent++;
+                # Drill down.
+                init_and_update();
+                $global_indent--;
+                # Back in the box, laddie.
+                chdir ( $start_path );
+                }
             }
         
-        # Lets do our own.
-        # First, update and initialize the Git submodule repository for this working copy.
-        system ( `git submodule update --init` );
         # Now, bring each submodule up to the current master branch revision.
-        system ( `git submodule foreach 'git checkout master'` );
+        print ( "\ngit submodule checkout master:\n",`git submodule foreach 'git checkout master' 2>&1` );
         
         output_indents();
         print ( "Updated the submodules in the \"", cwd(), "\" directory" );
