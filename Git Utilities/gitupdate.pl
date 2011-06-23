@@ -22,7 +22,9 @@
 #       manage the release process manually. This is a "quick and dirty" method for an  #
 #       active development tree.                                                        #
 #                                                                                       #
-#   VERSION: 1.0.4                                                                      #
+#   VERSION: 1.0.5                                                                      #
+#                                                                                       #
+#   1.0.5:  Found a bug, where I forgot to propagate the -r into the recursion.         $
 #                                                                                       #
 #   1.0.4:  Now operate at the top-level only, unless specifically told to recurse,     #
 #           with a -r. Set the init to before the recursion, to ensure that the various #
@@ -145,6 +147,7 @@ sub init_and_update
         
         # First, update and initialize the Git submodule repository for this working copy.
         # This ensures that the directory has been created.
+        # I split these up, because the command line call can be a bit lengthy.
         print ( "\ngit submodule update --init:\n" );
         print ( `git submodule update --init 2>&1` );
         
@@ -164,7 +167,7 @@ sub init_and_update
                 # Make sure that command line messages are indented.
                 $global_indent++;
                 # Drill down.
-                init_and_update();
+                init_and_update('-r');  # Add the '-r' parameter by default.
                 $global_indent--;
                 # Back in the box, laddie.
                 chdir ( $start_path );
@@ -172,7 +175,8 @@ sub init_and_update
             }
         
         # Now, bring each submodule up to the current master branch revision.
-        print ( "\ngit submodule checkout master:\n",`git submodule foreach 'git checkout master' 2>&1` );
+        print ( "\ngit submodule checkout master:\n" );
+        print ( `git submodule foreach 'git checkout master' 2>&1` );
         
         output_indents();
         print ( "Updated the submodules in the \"", cwd(), "\" directory" );
