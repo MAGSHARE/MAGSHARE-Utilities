@@ -4,12 +4,12 @@
 #                         RECURSIVE GIT SUBMODULE UPDATER SCRIPT                        #
 #########################################################################################
 #   USAGE:                                                                              #
-#       cd [<The base Git Working Copy Directory>]                                      #
-#       gitupdate.pl [-rdh] (Operates on the CWD).                                      #
+#       cd [<POSIX Path to Git Repository>]                                             #
+#       gitupdate.pl [-rdhx] (Operates on the CWD).                                     #
 #                                                                                       #
 #       OR                                                                              #
 #                                                                                       #
-#       gitupdate.pl [-rdh] <POSIX Path to Git Repository>                              #
+#       gitupdate.pl [-rdhx] [<POSIX Path to Git Repository>]                           #
 #                                                                                       #
 #   ARGUMENTS:                                                                          #
 #       -r  Recursive.  If specified, the operation will update recursively.            #
@@ -32,7 +32,7 @@
 #       manage the release process manually. This is a "quick and dirty" method for an  #
 #       active development tree.                                                        #
 #                                                                                       #
-#   VERSION: 1.0.9                                                                      #
+#   VERSION: 1.0.10                                                                     #
 #                                                                                       #
 #   This script is written by the fine folks at MAGSHARE (http://magshare.org). There   #
 #   are no licensing restrictions, but it would be...unfortunate, if folks wanted to    #
@@ -44,6 +44,8 @@
 #       http://longair.net/blog/2010/06/02/git-submodules-explained/                    #
 #                                                                                       #
 #   CHANGELIST:                                                                         #
+#                                                                                       #
+#   1.0.10: Improved the directory vetting, and beefed up the comments and help.        #
 #                                                                                       #
 #   1.0.9:  Added the -x option.                                                        #
 #                                                                                       #
@@ -82,14 +84,17 @@ my $global_indent = 0;
 if ( defined $options{h} )  # BLUE WIZARD NEEDS CLUE -BADLY.
     {
     print << "EOF";
+This script recursively goes through a Git repository working copy, and "drills"
+into submodules. It goes as deep as it can, and ensures that the "deepest" modules
+are updated, prior to "containing" modules being updated.
 
 USAGE:
-  cd [<The base Git Working Copy Directory>]
-  gitupdate.pl [-rdh] (Operates on the CWD).
+  cd [<POSIX Path to Git Repository>]
+  gitupdate.pl [-rdhx] (Operates on the CWD).
   
   OR
   
-  gitupdate.pl [-rdh] <POSIX Path to Git Repository>
+  gitupdate.pl [-rdhx] [<POSIX Path to Git Repository>]
 
 ARGUMENTS:
   -r  Recursive.  If specified, the operation will update recursively.
@@ -101,16 +106,32 @@ ARGUMENTS:
   
   -h  Help        Prints the usage info.
 
-This script recursively goes through a Git repository working copy, and "drills"
-into submodules. It goes as deep as it can, and ensures that the "deepest" modules
-are updated, prior to "containing" modules being updated.
-
 BIG CAVEAT:
     It's usually not a good idea to circumvent the traditional "waterfall" release
     process. A containing submodule may actually need one of the contained modules
     to be an older version, so this could torpedo that. It's always a good idea to
     manage the release process manually. This is a "quick and dirty" method for an
     active development tree.
+    
+EXAMPLES:
+    Just update one repository level at the working directory:
+    
+        cd /usr/gitrep/MyVeryKewlGitProject
+        /bin/gitupdate.pl
+    
+    Update a recursive repository at the working directory:
+    
+        cd /usr/gitrep/MyVeryKewlGitProject
+        /bin/gitupdate.pl -r
+    
+    Delete a repository's submodule references at the working directory:
+    
+        cd /usr/gitrep/MyVeryKewlGitProject
+        /bin/gitupdate.pl -d
+    
+    Recursively update to HEAD, at a specified directory:
+    
+        /bin/gitupdate.pl -rx /usr/gitrep/MyVeryKewlGitProject
 EOF
     }
 else
@@ -121,9 +142,17 @@ else
         print ( 'Switching the working directory to ', $ARGV[0], ".\n" );
         chdir ( "$ARGV[0]" );
         }
-    elsif ( defined $ARGV[0] && !(-d $ARGV[0] . "/.git") )
+    elsif ( (defined $ARGV[0] && !(-d $ARGV[0] . "/.git")) || !(-d cwd() . "/.git") )
         {
-        print ( $ARGV[0], " is not a Git repository.\n" );
+        # We tell the user they handed us a red herring.
+        my $dir = cwd();
+        
+        if ( defined $ARGV[0] && !(-d $ARGV[0] . "/.git") )
+            {
+            $dir = $ARGV[0];
+            }
+        
+        print ( '"', $dir, '"', " is not a Git repository.\n" );
         exit;
         }
     
