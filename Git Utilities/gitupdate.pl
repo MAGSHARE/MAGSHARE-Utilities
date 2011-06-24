@@ -32,7 +32,7 @@
 #       manage the release process manually. This is a "quick and dirty" method for an  #
 #       active development tree. It's useful for testing in an informal way.            #
 #                                                                                       #
-#   VERSION: 1.0.11                                                                     #
+#   VERSION: 1.0.12                                                                     #
 #                                                                                       #
 #   This script is written by the fine folks at MAGSHARE (http://magshare.org). There   #
 #   are no licensing restrictions, but it would be...unfortunate, if folks wanted to    #
@@ -44,6 +44,8 @@
 #       http://longair.net/blog/2010/06/02/git-submodules-explained/                    #
 #                                                                                       #
 #   CHANGELIST:                                                                         #
+#                                                                                       #
+#   1.0.12: Added a top-level check to make sure the repository has submodules.         #
 #                                                                                       #
 #   1.0.11: Now save and reset the CWD, when using a passed-in WD.                      #
 #                                                                                       #
@@ -139,31 +141,30 @@ EOF
 else
     {
     my $old_cwd = cwd();    # Save for after
+    my $dir = cwd();
+    
+    if ( defined $ARGV[0] )
+        {
+        $dir = $ARGV[0];
+        }
     
     # Check to see if the supplied directory is a Git repository.
-    if ( defined $ARGV[0] && (-d $ARGV[0] . "/.git") )
-        {
-        print ( 'Switching the working directory to ', $ARGV[0], ".\n" );
-        chdir ( "$ARGV[0]" );
-        }
-    elsif ( (defined $ARGV[0] && !(-d $ARGV[0] . "/.git")) || !(-d cwd() . "/.git") )
+    if ( !(-d $dir . "/.git") )
         {
         # We tell the user they handed us a red herring.
-        my $dir = cwd();
-        
-        if ( defined $ARGV[0] && !(-d $ARGV[0] . "/.git") )
-            {
-            $dir = $ARGV[0];
-            }
-        
         print ( '"', $dir, '"', " is not a Git repository.\n" );
         exit;
         }
-    
-    print ( 'Searching the base project at "', cwd(), '"' );
+    elsif ( !(-e $dir . '/.gitmodules') )   # Make sure that we have submodules.
+        {
+        print ( '"', $dir, '"', " does not contain any submodules.\n" );
+        exit;
+        }
+
+    print ( 'Searching the base project at "', $dir, '"' );
+    chdir ( $dir );
     init_and_update();
     print ( "\n" );
-    
     chdir ( $old_cwd ); # Make like a Boy Scout. Leave it better than you found it...
     }
 
