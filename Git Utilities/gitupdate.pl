@@ -206,11 +206,11 @@ sub init_and_update()
                 # Back in the box, laddie.
                 chdir ( $start_path );
                 }
-            elsif ( defined $options{d} )    # Otherwise, g'bye
-                {
-                unlink ( ".gitmodules" );
-                print ( "Deleted Git references to submodules under the ", cwd(), " directory" );
-                }
+            }
+        elsif ( defined $options{d} )    # Otherwise, g'bye
+            {
+            unlink ( ".gitmodules" );
+            print ( "Deleted Git references to submodules under the ", cwd(), " directory" );
             }
         
         # Now, bring each submodule up to the current master branch revision.
