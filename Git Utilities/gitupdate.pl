@@ -100,6 +100,17 @@ ARGUMENTS:
   -x  HEAD        Checks out the HEAD revisions (See Caveat).
   
   -h  Help        Prints the usage info.
+
+This script recursively goes through a Git repository working copy, and "drills"
+into submodules. It goes as deep as it can, and ensures that the "deepest" modules
+are updated, prior to "containing" modules being updated.
+
+BIG CAVEAT:
+    It's usually not a good idea to circumvent the traditional "waterfall" release
+    process. A containing submodule may actually need one of the contained modules
+    to be an older version, so this could torpedo that. It's always a good idea to
+    manage the release process manually. This is a "quick and dirty" method for an
+    active development tree.
 EOF
     }
 else
