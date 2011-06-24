@@ -17,6 +17,8 @@
 #                                                                                       #
 #       -d  Delete      Unlinks (deletes) the submodule mapping. Will not work with -r. #
 #                                                                                       #
+#       -x  HEAD        Checks out the HEAD revisions (See Caveat).                     #
+#                                                                                       #
 #       -h  Help        Prints the usage info.                                          #
 #                                                                                       #
 #   This script recursively goes through a Git repository working copy, and "drills"    #
@@ -42,6 +44,8 @@
 #       http://longair.net/blog/2010/06/02/git-submodules-explained/                    #
 #                                                                                       #
 #   CHANGELIST:                                                                         #
+#                                                                                       #
+#   1.0.9:  Added the -x option.                                                        #
 #                                                                                       #
 #   1.0.8:  Added some credits, and the ability to specify a target directory.          #
 #                                                                                       #
@@ -71,7 +75,7 @@ use Getopt::Std;    # This makes it easier to specify command-line options.
 
 my %options = ();
 
-getopts("hrd", \%options);
+getopts("hrdx", \%options);
 
 my $global_indent = 0;
 
@@ -93,6 +97,8 @@ ARGUMENTS:
 
   -d  Delete      Unlinks (deletes) the submodule mapping. Will not work with -r.
 
+  -x  HEAD        Checks out the HEAD revisions (See Caveat).
+  
   -h  Help        Prints the usage info.
 EOF
     }
@@ -252,9 +258,20 @@ sub init_and_update()
                     }
                 }
             
-            # Now, bring each submodule up to the current master branch revision.
-            print ( "\ngit submodule checkout master:\n" );
-            print ( `git submodule foreach 'git checkout master' 2>&1` );
+            # Now, bring each submodule up to the current master (or HEAD) branch revision.
+            
+            # If we specify the -x option, then we check out the HEAD revision. Master branch revision is default.
+            if ( defined $options{x} )
+                {
+                output_indents();
+                print ( "Checking out the HEAD revision.\n" );
+                print ( `git submodule foreach 'git checkout HEAD' 2>&1` );
+                }
+            else
+                {
+                print ( "Checking out the master revision.\n" );
+                print ( `git submodule foreach 'git checkout master' 2>&1` );
+                }
             
             output_indents();
             print ( "Updated the submodules in the \"", cwd(), "\" directory" );
