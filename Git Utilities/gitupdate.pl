@@ -5,11 +5,15 @@
 #########################################################################################
 #   USAGE:                                                                              #
 #       cd [<The base Git Working Copy Directory>]                                      #
-#       gitupdate.pl [-r] (Operates on the CWD).                                        #
+#       gitupdate.pl [-rdh] (Operates on the CWD).                                      #
 #                                                                                       #
-#       ARGUMENTS:                                                                      #
-#                   -r  Recursive.  If specified, the operation will work recursively.  #
-#                                   Default is one-level only.                          #
+#   ARGUMENTS:                                                                          #
+#       -r  Recursive.  If specified, the operation will update recursively.            #
+#                       Default is one-level only.                                      #
+#                                                                                       #
+#       -d  Delete      Unlinks (deletes) the submodule mapping. Will not work with -r. #
+#                                                                                       #
+#       -h  Help        Prints the usage info.                                          #
 #                                                                                       #
 #   This script recursively goes through a Git repository working copy, and "drills"    #
 #   into submodules. It goes as deep as it can, and ensures that the "deepest" modules  #
@@ -22,7 +26,10 @@
 #       manage the release process manually. This is a "quick and dirty" method for an  #
 #       active development tree.                                                        #
 #                                                                                       #
-#   VERSION: 1.0.5                                                                      #
+#   VERSION: 1.0.6                                                                      #
+#                                                                                       #
+#   1.0.6:  Added some command-line options. In particular, the -d option, which will   #
+#           delete the submodule[s] at the given level.                                 #
 #                                                                                       #
 #   1.0.5:  Found a bug, where I forgot to propagate the -r into the recursion.         $
 #                                                                                       #
@@ -39,13 +46,40 @@
 #           is necessary.                                                               #
 #########################################################################################
 
-use strict;
-use Cwd;
+use strict;         # I'm anal. What can I say?
+use Cwd;            # We'll be operating on the working directory.
+use Getopt::Std;    # This makes it easier to specify command-line options.
+
+print "Options:\n";
+my %options = ();
+
+getopts("hdr", \%options);
 
 my $global_indent = 0;
-print ( 'Searching the base project at "', cwd(), '"' );
-init_and_update($ARGV[0]);
-print ( "\n" );
+
+if ( defined $options{h} )  # BLUE WIZARD NEEDS CLUE -BADLY.
+    {
+    print << "EOF";
+
+USAGE:
+  cd [<The base Git Working Copy Directory>]
+  gitupdate.pl [-rdh] (Operates on the CWD).
+
+ARGUMENTS:
+  -r  Recursive.  If specified, the operation will update recursively.
+                  Default is one-level only.
+
+  -d  Delete      Unlinks (deletes) the submodule mapping. Will not work with -r.
+
+  -h  Help        Prints the usage info.
+EOF
+    }
+else
+    {
+    print ( 'Searching the base project at "', cwd(), '"' );
+    init_and_update();
+    print ( "\n" );
+    }
 
 exit;
 
@@ -53,7 +87,7 @@ exit;
 # This function is a recursive function that will traverse a submodule hierarchy,       #
 # and will update them, from the bottom up.                                             #
 #########################################################################################
-sub init_and_update
+sub init_and_update()
 {
     # This is an array that will hold our submodule listing.
     my @submodules;
@@ -154,7 +188,7 @@ sub init_and_update
         # Now, we simply go through the list, recursing all the way.
         # This ensures that nested submodules are updated BEFORE their containers.
         # However, we only do it if we were given a -r.
-        if ( (index ( $_[0], 'r' ) > 0) )
+        if ( defined $options{r} )
             {
             for my $index ( 0 .. $#submodules )
                 {
@@ -167,10 +201,15 @@ sub init_and_update
                 # Make sure that command line messages are indented.
                 $global_indent++;
                 # Drill down.
-                init_and_update('-r');  # Add the '-r' parameter by default.
+                init_and_update();  # Add the '-r' parameter by default.
                 $global_indent--;
                 # Back in the box, laddie.
                 chdir ( $start_path );
+                }
+            elsif ( defined $options{d} )    # Otherwise, g'bye
+                {
+                unlink ( ".gitmodules" );
+                print ( "Deleted Git references to submodules under the ", cwd(), " directory" );
                 }
             }
         
@@ -191,7 +230,7 @@ sub init_and_update
 #########################################################################################
 # This simply helps the user to see the hierarchy of the operation.                     #
 #########################################################################################
-sub output_indents
+sub output_indents()
 {
     print ( "\n" );
     
