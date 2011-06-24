@@ -7,6 +7,10 @@
 #       cd [<The base Git Working Copy Directory>]                                      #
 #       gitupdate.pl [-rdh] (Operates on the CWD).                                      #
 #                                                                                       #
+#       OR                                                                              #
+#                                                                                       #
+#       gitupdate.pl [-rdh] <POSIX Path to Git Repository>                              #
+#                                                                                       #
 #   ARGUMENTS:                                                                          #
 #       -r  Recursive.  If specified, the operation will update recursively.            #
 #                       Default is one-level only.                                      #
@@ -26,7 +30,20 @@
 #       manage the release process manually. This is a "quick and dirty" method for an  #
 #       active development tree.                                                        #
 #                                                                                       #
-#   VERSION: 1.0.7                                                                      #
+#   VERSION: 1.0.8                                                                      #
+#                                                                                       #
+#   This script is written by the fine folks at MAGSHARE (http://magshare.org). There   #
+#   are no licensing restrictions, but it would be...unfortunate, if folks wanted to    #
+#   claim authorship that did not, in fact, do said authoring.                          #
+#   With that being said, the seeds of this script started with work by Chris Jean, as  #
+#   explained here:                                                                     #
+#       http://chrisjean.com/2009/09/16/recursively-updating-git-submodules/            #
+#   A lot of the knowledge to extend this script also came from Mark Longair, here:     #
+#       http://longair.net/blog/2010/06/02/git-submodules-explained/                    #
+#                                                                                       #
+#   CHANGELIST:                                                                         #
+#                                                                                       #
+#   1.0.8:  Added some credits, and the ability to specify a target directory.          #
 #                                                                                       #
 #   1.0.7:  There was some general bone-headedness in 1.0.6. This has been de-Homered.  #
 #                                                                                       #
@@ -66,6 +83,10 @@ if ( defined $options{h} )  # BLUE WIZARD NEEDS CLUE -BADLY.
 USAGE:
   cd [<The base Git Working Copy Directory>]
   gitupdate.pl [-rdh] (Operates on the CWD).
+  
+  OR
+  
+  gitupdate.pl [-rdh] <POSIX Path to Git Repository>
 
 ARGUMENTS:
   -r  Recursive.  If specified, the operation will update recursively.
@@ -78,6 +99,18 @@ EOF
     }
 else
     {
+    # Check to see if the supplied directory is a Git repository.
+    if ( defined $ARGV[0] && (-d $ARGV[0] . "/.git") )
+        {
+        print ( 'Switching the working directory to ', $ARGV[0], ".\n" );
+        chdir ( "$ARGV[0]" );
+        }
+    elsif ( defined $ARGV[0] && !(-d $ARGV[0] . "/.git") )
+        {
+        print ( $ARGV[0], " is not a Git repository.\n" );
+        exit;
+        }
+    
     print ( 'Searching the base project at "', cwd(), '"' );
     init_and_update();
     print ( "\n" );
