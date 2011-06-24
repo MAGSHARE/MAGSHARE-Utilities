@@ -315,6 +315,7 @@ sub init_and_update()
                 }
             else
                 {
+                output_indents();
                 print ( "Checking out the master revision.\n" );
                 print ( `git submodule foreach 'git checkout master' 2>&1` );
                 }
