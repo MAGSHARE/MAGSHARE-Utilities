@@ -69,7 +69,6 @@ use strict;         # I'm anal. What can I say?
 use Cwd;            # We'll be operating on the working directory.
 use Getopt::Std;    # This makes it easier to specify command-line options.
 
-print "Options:\n";
 my %options = ();
 
 getopts("hrd", \%options);
