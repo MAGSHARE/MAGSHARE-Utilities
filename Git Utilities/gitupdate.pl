@@ -32,7 +32,7 @@
 #       manage the release process manually. This is a "quick and dirty" method for an  #
 #       active development tree.                                                        #
 #                                                                                       #
-#   VERSION: 1.0.8                                                                      #
+#   VERSION: 1.0.9                                                                      #
 #                                                                                       #
 #   This script is written by the fine folks at MAGSHARE (http://magshare.org). There   #
 #   are no licensing restrictions, but it would be...unfortunate, if folks wanted to    #
