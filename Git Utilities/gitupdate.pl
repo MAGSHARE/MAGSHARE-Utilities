@@ -12,7 +12,7 @@
 #       gitupdate.pl [-rdhx] [<POSIX Path to Git Repository>]                           #
 #                                                                                       #
 #   ARGUMENTS:                                                                          #
-#       -r  Recursive.  If specified, the operation will update recursively.            #
+#       -r  Recursive   If specified, the operation will update recursively.            #
 #                       Default is one-level only.                                      #
 #                                                                                       #
 #       -d  Delete      Unlinks (deletes) the submodule mapping. Will not work with -r. #
@@ -30,9 +30,9 @@
 #       process. A containing submodule may actually need one of the contained modules  #
 #       to be an older version, so this could torpedo that. It's always a good idea to  #
 #       manage the release process manually. This is a "quick and dirty" method for an  #
-#       active development tree.                                                        #
+#       active development tree. It's useful for testing in an informal way.            #
 #                                                                                       #
-#   VERSION: 1.0.10                                                                     #
+#   VERSION: 1.0.11                                                                     #
 #                                                                                       #
 #   This script is written by the fine folks at MAGSHARE (http://magshare.org). There   #
 #   are no licensing restrictions, but it would be...unfortunate, if folks wanted to    #
@@ -44,6 +44,8 @@
 #       http://longair.net/blog/2010/06/02/git-submodules-explained/                    #
 #                                                                                       #
 #   CHANGELIST:                                                                         #
+#                                                                                       #
+#   1.0.11: Now save and reset the CWD, when using a passed-in WD.                      #
 #                                                                                       #
 #   1.0.10: Improved the directory vetting, and beefed up the comments and help.        #
 #                                                                                       #
@@ -97,7 +99,7 @@ USAGE:
   gitupdate.pl [-rdhx] [<POSIX Path to Git Repository>]
 
 ARGUMENTS:
-  -r  Recursive.  If specified, the operation will update recursively.
+  -r  Recursive   If specified, the operation will update recursively.
                   Default is one-level only.
 
   -d  Delete      Unlinks (deletes) the submodule mapping. Will not work with -r.
@@ -111,7 +113,7 @@ BIG CAVEAT:
     process. A containing submodule may actually need one of the contained modules
     to be an older version, so this could torpedo that. It's always a good idea to
     manage the release process manually. This is a "quick and dirty" method for an
-    active development tree.
+    active development tree. It's useful for testing in an informal way.
     
 EXAMPLES:
     Just update one repository level at the working directory:
@@ -136,6 +138,8 @@ EOF
     }
 else
     {
+    my $old_cwd = cwd();    # Save for after
+    
     # Check to see if the supplied directory is a Git repository.
     if ( defined $ARGV[0] && (-d $ARGV[0] . "/.git") )
         {
@@ -159,6 +163,8 @@ else
     print ( 'Searching the base project at "', cwd(), '"' );
     init_and_update();
     print ( "\n" );
+    
+    chdir ( $old_cwd ); # Make like a Boy Scout. Leave it better than you found it...
     }
 
 exit;
