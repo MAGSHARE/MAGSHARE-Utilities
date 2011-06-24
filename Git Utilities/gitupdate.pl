@@ -26,7 +26,9 @@
 #       manage the release process manually. This is a "quick and dirty" method for an  #
 #       active development tree.                                                        #
 #                                                                                       #
-#   VERSION: 1.0.6                                                                      #
+#   VERSION: 1.0.7                                                                      #
+#                                                                                       #
+#   1.0.7:  There was some general bone-headedness in 1.0.6. This has been de-Homered.  #
 #                                                                                       #
 #   1.0.6:  Added some command-line options. In particular, the -d option, which will   #
 #           delete the submodule[s] at the given level.                                 #
@@ -53,7 +55,7 @@ use Getopt::Std;    # This makes it easier to specify command-line options.
 print "Options:\n";
 my %options = ();
 
-getopts("hdr", \%options);
+getopts("hrd", \%options);
 
 my $global_indent = 0;
 
@@ -179,46 +181,52 @@ sub init_and_update()
             }
         $global_indent--;
         
-        # First, update and initialize the Git submodule repository for this working copy.
-        # This ensures that the directory has been created.
-        # I split these up, because the command line call can be a bit lengthy.
-        print ( "\ngit submodule update --init:\n" );
-        print ( `git submodule update --init 2>&1` );
-        
-        # Now, we simply go through the list, recursing all the way.
-        # This ensures that nested submodules are updated BEFORE their containers.
-        # However, we only do it if we were given a -r.
-        if ( defined $options{r} )
-            {
-            for my $index ( 0 .. $#submodules )
-                {
-                # We keep track of where we are.
-                my $start_path = cwd();
-                # Drop down into the submodule directory.
-                chdir ( $submodules[$index] { 'pathname' } );
-                output_indents();
-                print ( "Looking for submodules under the ", $submodules[$index] { 'submodule' }, " submodule" );
-                # Make sure that command line messages are indented.
-                $global_indent++;
-                # Drill down.
-                init_and_update();  # Add the '-r' parameter by default.
-                $global_indent--;
-                # Back in the box, laddie.
-                chdir ( $start_path );
-                }
-            }
-        elsif ( defined $options{d} )    # Otherwise, g'bye
+        # If we were given a -d, we simply delete the .gitmodules file, and scrag the script.
+        if ( defined $options{d} )
             {
             unlink ( ".gitmodules" );
-            print ( "Deleted Git references to submodules under the ", cwd(), " directory" );
+            output_indents();
+            print ( "Deleted Git references to submodules under the ", cwd(), " directory\n" );
+            exit;
             }
-        
-        # Now, bring each submodule up to the current master branch revision.
-        print ( "\ngit submodule checkout master:\n" );
-        print ( `git submodule foreach 'git checkout master' 2>&1` );
-        
-        output_indents();
-        print ( "Updated the submodules in the \"", cwd(), "\" directory" );
+        else
+            {
+            # First, update and initialize the Git submodule repository for this working copy.
+            # This ensures that the directory has been created.
+            # I split these up, because the command line call can be a bit lengthy.
+            print ( "\ngit submodule update --init:\n" );
+            print ( `git submodule update --init 2>&1` );
+            
+            # Now, we simply go through the list, recursing all the way.
+            # This ensures that nested submodules are updated BEFORE their containers.
+            # However, we only do it if we were given a -r.
+            if ( defined $options{r} )
+                {
+                for my $index ( 0 .. $#submodules )
+                    {
+                    # We keep track of where we are.
+                    my $start_path = cwd();
+                    # Drop down into the submodule directory.
+                    chdir ( $submodules[$index] { 'pathname' } );
+                    output_indents();
+                    print ( "Looking for submodules under the ", $submodules[$index] { 'submodule' }, " submodule" );
+                    # Make sure that command line messages are indented.
+                    $global_indent++;
+                    # Drill down.
+                    init_and_update();  # Add the '-r' parameter by default.
+                    $global_indent--;
+                    # Back in the box, laddie.
+                    chdir ( $start_path );
+                    }
+                }
+            
+            # Now, bring each submodule up to the current master branch revision.
+            print ( "\ngit submodule checkout master:\n" );
+            print ( `git submodule foreach 'git checkout master' 2>&1` );
+            
+            output_indents();
+            print ( "Updated the submodules in the \"", cwd(), "\" directory" );
+            }
         }
     else
         {
