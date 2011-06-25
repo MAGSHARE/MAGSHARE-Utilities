@@ -288,8 +288,9 @@ sub init_and_update()
             # First, update and initialize the Git submodule repository for this working copy.
             # This ensures that the directory has been created.
             # I split these up, because the command line call can be a bit lengthy.
-            print ( "\ngit submodule update --init --recursive:\n" );
-            print ( `git submodule update --init --recursive 2>&1` );
+
+            print ( `git submodule init 2>&1` );
+            print ( `git submodule update 2>&1` );
             
             # Now, we simply go through the list, recursing all the way.
             # This ensures that nested submodules are updated BEFORE their containers.
@@ -315,16 +316,10 @@ sub init_and_update()
                 }
             
             # Now, bring each submodule up to the current master (or HEAD) branch revision.
-            
-            # In either case, we delete the directory of the module first.
-            for my $index ( 0 .. $#submodules )
-                {
-                rmtree ( $submodules[$index] { 'pathname' } );
-                }
-            
-            # Do this again, to repopulate.
-            print ( `git submodule update --init 2>&1` );
-            
+
+            print ( `git submodule init 2>&1` );
+            print ( `git submodule update 2>&1` );
+
             # If we specify the -x option, then we check out the HEAD revision. Master branch revision is default.
             if ( defined $options{x} )
                 {
