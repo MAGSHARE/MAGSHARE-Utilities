@@ -19,6 +19,8 @@
 #                                                                                       #
 #       -x  HEAD        Checks out the HEAD revisions (See Caveat).                     #
 #                                                                                       #
+#       -l  Release     If there is a branch named "release," that is used.             #
+#                                                                                       #
 #       -h  Help        Prints the usage info.                                          #
 #                                                                                       #
 #   This script recursively goes through a Git repository working copy, and "drills"    #
@@ -46,7 +48,8 @@
 #   CHANGELIST:                                                                         #
 #                                                                                       #
 #   1.0.13: The @#!! updating wasn't actually updating. I now explicitly delete the     #
-#           module directory before updating. That'll show 'em..                        #
+#           module directory before updating. That'll show 'em.                         #
+#           Added the -l option.                                                        #
 #                                                                                       #
 #   1.0.12: Added a top-level check to make sure the repository has submodules.         #
 #                                                                                       #
@@ -85,7 +88,7 @@ use File::Path;
 
 my %options = ();
 
-getopts("hrdx", \%options);
+getopts("rdxlh", \%options);
 
 my $global_indent = 0;
 
@@ -111,7 +114,9 @@ ARGUMENTS:
   -d  Delete      Unlinks (deletes) the submodule mapping. Will not work with -r.
 
   -x  HEAD        Checks out the HEAD revisions (See Caveat).
-  
+
+  -l  Release     If there is a branch named "release," that is used.
+
   -h  Help        Prints the usage info.
 
 BIG CAVEAT:
@@ -283,8 +288,8 @@ sub init_and_update()
             # First, update and initialize the Git submodule repository for this working copy.
             # This ensures that the directory has been created.
             # I split these up, because the command line call can be a bit lengthy.
-            print ( "\ngit submodule update --init:\n" );
-            print ( `git submodule update --init 2>&1` );
+            print ( "\ngit submodule update --init --recursive:\n" );
+            print ( `git submodule update --init --recursive 2>&1` );
             
             # Now, we simply go through the list, recursing all the way.
             # This ensures that nested submodules are updated BEFORE their containers.
@@ -326,6 +331,13 @@ sub init_and_update()
                 output_indents();
                 print ( "Checking out the HEAD revision.\n" );
                 print ( `git submodule foreach 'git checkout -f HEAD' 2>&1` );
+                }
+            # If we specified a -l, then only branches named "release" (all lowercase) will be checked out.
+            elsif ( defined $options{l} )
+                {
+                output_indents();
+                print ( "Checking out the release revision.\n" );
+                print ( `git submodule foreach 'git checkout -f release' 2>&1` );
                 }
             else
                 {
