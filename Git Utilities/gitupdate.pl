@@ -32,7 +32,7 @@
 #       manage the release process manually. This is a "quick and dirty" method for an  #
 #       active development tree. It's useful for testing in an informal way.            #
 #                                                                                       #
-#   VERSION: 1.0.12                                                                     #
+#   VERSION: 1.0.13                                                                     #
 #                                                                                       #
 #   This script is written by the fine folks at MAGSHARE (http://magshare.org). There   #
 #   are no licensing restrictions, but it would be...unfortunate, if folks wanted to    #
@@ -44,6 +44,9 @@
 #       http://longair.net/blog/2010/06/02/git-submodules-explained/                    #
 #                                                                                       #
 #   CHANGELIST:                                                                         #
+#                                                                                       #
+#   1.0.13: The @#!! updating wasn't actually updating. I now explicitly delete the     #
+#           module directory before updating. That'll show 'em..                        #
 #                                                                                       #
 #   1.0.12: Added a top-level check to make sure the repository has submodules.         #
 #                                                                                       #
@@ -78,6 +81,7 @@
 use strict;         # I'm anal. What can I say?
 use Cwd;            # We'll be operating on the working directory.
 use Getopt::Std;    # This makes it easier to specify command-line options.
+use File::Path;
 
 my %options = ();
 
@@ -307,18 +311,27 @@ sub init_and_update()
             
             # Now, bring each submodule up to the current master (or HEAD) branch revision.
             
+            # In either case, we delete the directory of the module first.
+            for my $index ( 0 .. $#submodules )
+                {
+                rmtree ( $submodules[$index] { 'pathname' } );
+                }
+            
+            # Do this again, to repopulate.
+            print ( `git submodule update --init 2>&1` );
+            
             # If we specify the -x option, then we check out the HEAD revision. Master branch revision is default.
             if ( defined $options{x} )
                 {
                 output_indents();
                 print ( "Checking out the HEAD revision.\n" );
-                print ( `git submodule foreach 'git checkout HEAD' 2>&1` );
+                print ( `git submodule foreach 'git checkout -f HEAD' 2>&1` );
                 }
             else
                 {
                 output_indents();
                 print ( "Checking out the master revision.\n" );
-                print ( `git submodule foreach 'git checkout master' 2>&1` );
+                print ( `git submodule foreach 'git checkout -f master' 2>&1` );
                 }
             
             output_indents();
