@@ -34,7 +34,7 @@
 #       manage the release process manually. This is a "quick and dirty" method for an  #
 #       active development tree. It's useful for testing in an informal way.            #
 #                                                                                       #
-#   VERSION: 1.0.13                                                                     #
+#   VERSION: 1.0.14                                                                     #
 #                                                                                       #
 #   This script is written by the fine folks at MAGSHARE (http://magshare.org). There   #
 #   are no licensing restrictions, but it would be...unfortunate, if folks wanted to    #
@@ -47,8 +47,12 @@
 #                                                                                       #
 #   CHANGELIST:                                                                         #
 #                                                                                       #
-#   1.0.13: The @#!! updating wasn't actually updating. I now explicitly delete the     #
-#           module directory before updating. That'll show 'em.                         #
+#   1.0.14: For some reason, the submodule directory needs to be physically deleted in  #
+#           order for the latest versions to be brought in. This script now does that.  #
+#                                                                                       #
+#   1.0.13: Not sure how I got the update working properly, but it does. If you want to #
+#           ensure the update works properly, then first delete the submodule directory #
+#           and run gitupdate -r[l|x|nothing].                                          #
 #           Added the -l option.                                                        #
 #                                                                                       #
 #   1.0.12: Added a top-level check to make sure the repository has submodules.         #
@@ -285,10 +289,18 @@ sub init_and_update()
             }
         else
             {
+            # For some reason, we need to explicitly delete the submodule directory for the latest version to show up.
+            # This makes the operation slower and more redundant, but it's not that bad.
+            for my $index ( 0 .. $#submodules )
+                {
+                output_indents();
+                print ( 'Removing the submodule directory at ', cwd, '/', $submodules[$index] { 'pathname' } );
+                rmtree ( $submodules[$index] { 'pathname' } );
+                }
+            
             # First, update and initialize the Git submodule repository for this working copy.
             # This ensures that the directory has been created.
             # I split these up, because the command line call can be a bit lengthy.
-
             print ( `git submodule init 2>&1` );
             print ( `git submodule update 2>&1` );
             
@@ -316,7 +328,7 @@ sub init_and_update()
                 }
             
             # Now, bring each submodule up to the current master (or HEAD) branch revision.
-
+            # For some reason, doing this a second time seems to be the charm.
             print ( `git submodule init 2>&1` );
             print ( `git submodule update 2>&1` );
 
